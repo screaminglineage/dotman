@@ -1,21 +1,21 @@
 #include <filesystem>
 #include <iostream>
-#include <set>
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace fs = std::filesystem;
 
-const std::filesystem::path config_path{"/home/aditya/.config/"};
-const std::set<std::string_view> options{"add"};
+const std::filesystem::path config_path {"/home/aditya/.config/"};
+const std::unordered_set<std::string_view> options {"add"};
 
 using VecStr = std::vector<std::string_view>;
 
 struct CLIOption {
-    const char* long_option{};
-    const char* short_option{};
+    const char* long_option {};
+    const char* short_option {};
 };
 
 struct ConfigFiles {
@@ -38,15 +38,15 @@ struct ConfigFiles {
 };
 
 auto parseArguments(VecStr& args) {
-    std::unordered_map<std::string_view, VecStr> argOptions{};
+    std::unordered_map<std::string_view, VecStr> argOptions {};
 
-    for (auto it{args.begin()}; it < args.end(); ++it) {
+    for (auto it {args.begin()}; it < args.end(); ++it) {
         for (const auto& opt : options) {
             if (*it != opt)
                 break;
 
             ++it;
-            VecStr addArgs{};
+            VecStr addArgs {};
             while (it < args.end() && !options.contains(*it)) {
                 addArgs.push_back(*it);
                 ++it;
@@ -58,7 +58,7 @@ auto parseArguments(VecStr& args) {
 }
 
 int main(int argc, char* argv[]) {
-    std::string_view program{*argv};
+    std::string_view program {*argv};
     VecStr args(argv + 1, argv + argc);
 
     auto argOptions = parseArguments(args);
@@ -72,7 +72,7 @@ int main(int argc, char* argv[]) {
     }
     std::cerr << '\n';
 
-    auto programTitles = argOptions["add"];
+    auto programTitles {argOptions["add"]};
 
     if (programTitles.empty()) {
         std::cerr << "error: no path specified!\n";
@@ -80,19 +80,19 @@ int main(int argc, char* argv[]) {
     }
 
     for (const auto& programTitle : programTitles) {
-        auto dirPath{config_path / fs::path{programTitle}};
+        auto dirPath {config_path / fs::path {programTitle}};
 
         if (!fs::exists(dirPath)) {
             std::cerr << "error: " << dirPath << " not found!\n";
             return 1;
         }
 
-        std::vector<fs::path> files{};
+        std::vector<fs::path> files {};
         for (const auto& file : fs::recursive_directory_iterator(dirPath)) {
             files.push_back(file);
         }
 
-        ConfigFiles config{std::string{programTitle}, dirPath, files};
+        ConfigFiles config {std::string {programTitle}, dirPath, files};
         config.print();
     }
     return 0;
