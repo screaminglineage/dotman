@@ -5,11 +5,11 @@ EXECUTABLE = dotman
 INCLUDE = ./include
 SRC = ./src
 TARGET = ./target
-SQLITE3_O = $(INCLUDE)/libsqlite3.so.0.8.6
+SQLITE3 = sqlite3
 
 .PHONY: all
 all: 
-	$(CXX) $(STD) $(FLAGS) -I$(INCLUDE) $(SRC)/* $(SQLITE3_O) -o $(TARGET)/$(EXECUTABLE)
+	$(CXX) $(STD) $(FLAGS) -I$(INCLUDE) -l$(SQLITE3) $(SRC)/*  -o $(TARGET)/$(EXECUTABLE)
 
 
 .PHONY: clean
