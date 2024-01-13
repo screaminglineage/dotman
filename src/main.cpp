@@ -10,7 +10,7 @@
 namespace fs = std::filesystem;
 using namespace std::chrono_literals;
 
-const std::filesystem::path config_path{"/home/aditya/.config/"};
+const std::filesystem::path configPath{"/home/aditya/.config/"};
 const std::unordered_set<std::string_view> options{"add"};
 
 using VecStr = std::vector<std::string_view>;
@@ -90,7 +90,7 @@ int main(int argc, char* argv[]) {
     }
 
     for (const auto& programTitle : programTitles) {
-        auto dirPath{config_path / fs::path{programTitle}};
+        auto dirPath{configPath / fs::path{programTitle}};
 
         if (!fs::exists(dirPath)) {
             std::cerr << "error: " << dirPath << " not found!\n";

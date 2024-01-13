@@ -3,15 +3,16 @@ FLAGS = -Wall -Weffc++ -Wextra -Wconversion -Wsign-conversion
 EXECUTABLE = dotman
 
 INCLUDE = ./include
+SRC = ./src
+TARGET = ./target
 SQLITE3_O = $(INCLUDE)/libsqlite3.so.0.8.6
-SOURCES = main.cpp database.cpp
 
 .PHONY: all
 all: 
-	$(CXX) $(STD) $(FLAGS) -I$(INCLUDE) $(SOURCES) $(SQLITE3_O) -o ./target/$(EXECUTABLE)
+	$(CXX) $(STD) $(FLAGS) -I$(INCLUDE) $(SRC)/* $(SQLITE3_O) -o $(TARGET)/$(EXECUTABLE)
 
 
 .PHONY: clean
 clean:
-	rm target/*
+	rm $(TARGET)/*
 
