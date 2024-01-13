@@ -65,6 +65,8 @@ auto parseArguments(VecStr& args) {
     return argOptions;
 }
 
+void createDb();
+
 int main(int argc, char* argv[]) {
     std::string_view program{*argv};
     VecStr args(argv + 1, argv + argc);
@@ -104,5 +106,6 @@ int main(int argc, char* argv[]) {
         ConfigFiles config{std::string{programTitle}, dirPath, files};
         config.print();
     }
+    createDb();
     return 0;
 }
