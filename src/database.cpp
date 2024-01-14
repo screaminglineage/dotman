@@ -1,19 +1,20 @@
 #include "../include/sqlite_orm/sqlite_orm.h"
 #include <iostream>
-#include <memory>
+#include <string>
 
-struct User {
+struct Config {
+    // int uuid;
     int id;
-    std::string firstName;
-    std::string lastName;
-    int birthDate;
-    std::unique_ptr<std::string> imageUrl;
-    int typeId;
+    std::string tag;
+    std::string programName;
+    std::string configPath;
 };
 
-struct UserType {
+struct ConfigFiles {
+    // int uuid;
     int id;
-    std::string name;
+    int programId;
+    std::string filePath;
 };
 
 void createDb() {
@@ -22,33 +23,29 @@ void createDb() {
     using namespace sqlite_orm;
     auto storage = make_storage(
         "db.sqlite",
-        make_table("users",
-                   make_column("id", &User::id, primary_key().autoincrement()),
-                   make_column("first_name", &User::firstName),
-                   make_column("last_name", &User::lastName),
-                   make_column("birth_date", &User::birthDate),
-                   make_column("image_url", &User::imageUrl),
-                   make_column("type_id", &User::typeId)),
         make_table(
-            "user_types",
-            make_column("id", &UserType::id, primary_key().autoincrement()),
-            make_column("name", &UserType::name,
-                        default_value("name_placeholder"))));
+            "config_programs",
+            make_column("id", &Config::id, primary_key().autoincrement()),
+            make_column("tag", &Config::tag),
+            make_column("programName", &Config::programName),
+            make_column("configPath", &Config::configPath)),
+        make_table(
+            "config_files",
+            make_column("id", &ConfigFiles::id, primary_key().autoincrement()),
+            make_column("program_id", &ConfigFiles::programId),
+            make_column("files", &ConfigFiles::filePath),
+            foreign_key(&ConfigFiles::programId).references(&Config::id)));
     storage.sync_schema();
+
     std::cout << "Created db.sqlite!\n";
 
-    User user{-1,
-              "Jonh",
-              "Doe",
-              664416000,
-              std::make_unique<std::string>("url_to_heaven"),
-              3};
+    Config cfg{-1, "primary", "kitty", "/home/aditya/.config/kitty/"};
+    auto insertedId = storage.insert(cfg);
+    std::cout << "insertedId = " << insertedId << std::endl;
+    cfg.id = insertedId;
 
-    auto insertedId = storage.insert(user);
-    std::cout << "insertedId = " << insertedId << std::endl; //  insertedId = 8
-    user.id = insertedId;
-
-    User secondUser{-1, "Alice", "Inwonder", 831168000, {}, 2};
-    insertedId = storage.insert(secondUser);
-    secondUser.id = insertedId;
+    Config cfg2{-1, "primary", "rofi", "/home/aditya/.config/rofi/"};
+    insertedId = storage.insert(cfg2);
+    std::cout << "insertedId = " << insertedId << std::endl;
+    cfg.id = insertedId;
 }
