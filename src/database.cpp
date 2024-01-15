@@ -38,14 +38,11 @@ void createDb() {
     storage.sync_schema();
 
     std::cout << "Created db.sqlite!\n";
+}
 
-    Config cfg{-1, "primary", "kitty", "/home/aditya/.config/kitty/"};
+void insertDb(auto storage, Config cfg, ConfigFiles cfgFiles) {
+    // Config cfg{-1, "primary", "kitty", "/home/aditya/.config/kitty/"};
     auto insertedId = storage.insert(cfg);
-    std::cout << "insertedId = " << insertedId << std::endl;
-    cfg.id = insertedId;
-
-    Config cfg2{-1, "primary", "rofi", "/home/aditya/.config/rofi/"};
-    insertedId = storage.insert(cfg2);
     std::cout << "insertedId = " << insertedId << std::endl;
     cfg.id = insertedId;
 }
