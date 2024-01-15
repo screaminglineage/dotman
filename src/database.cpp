@@ -15,6 +15,7 @@ struct ConfigFiles {
     int id;
     int programId;
     std::string filePath;
+    std::string lastModified;
 };
 
 void createDb() {
@@ -34,6 +35,7 @@ void createDb() {
             make_column("id", &ConfigFiles::id, primary_key().autoincrement()),
             make_column("program_id", &ConfigFiles::programId),
             make_column("files", &ConfigFiles::filePath),
+            make_column("last_modified", &ConfigFiles::lastModified),
             foreign_key(&ConfigFiles::programId).references(&Config::id)));
     storage.sync_schema();
 
