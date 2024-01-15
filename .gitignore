@@ -1,3 +1,5 @@
-target
+build/*
 .clang-format
-db.sqlite
+
+# for testing
+db.sqlite 
