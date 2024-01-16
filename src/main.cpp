@@ -1,4 +1,4 @@
-#include <chrono> // required for printing lastModified time even if the LSP doesnt detect that
+#include <chrono>
 #include <filesystem>
 #include <iostream>
 #include <string>
@@ -22,10 +22,10 @@ struct CLIOption {
 
 struct File {
     fs::path filepath{};
-    fs::file_time_type lastModified{};
+    time_t lastModified{};
 };
 
-struct ConfigFiles {
+struct ConfigFilesData {
     std::string programTitle{};
     fs::path directory{};
     std::vector<File> files{};
@@ -68,6 +68,7 @@ auto parseArguments(VecStr& args) {
 void createDb();
 
 int main(int argc, char* argv[]) {
+
     std::string_view program{*argv};
     VecStr args(argv + 1, argv + argc);
 
@@ -89,6 +90,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    std::vector<ConfigFilesData> configs{};
     for (const auto& programTitle : programTitles) {
         auto dirPath{configPath / fs::path{programTitle}};
 
@@ -99,13 +101,19 @@ int main(int argc, char* argv[]) {
 
         std::vector<File> files{};
         for (const auto& file : fs::recursive_directory_iterator(dirPath)) {
-            File newFile{file, fs::last_write_time(file)};
-            files.push_back(newFile);
+            namespace chrono = std::chrono;
+            auto time = fs::last_write_time(file);
+            auto lastWriteTime = chrono::system_clock::to_time_t(
+                chrono::clock_cast<chrono::system_clock>(time));
+
+            files.push_back(File{file, lastWriteTime});
         }
 
-        ConfigFiles config{std::string{programTitle}, dirPath, files};
+        ConfigFilesData config{std::string{programTitle}, dirPath, files};
+        // configs.push_back(config);
         config.print();
     }
     createDb();
+
     return 0;
 }

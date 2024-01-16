@@ -1,22 +1,36 @@
 #include "../include/sqlite_orm/sqlite_orm.h"
 #include <iostream>
 #include <string>
+#include <vector>
 
 struct Config {
     // int uuid;
-    int id;
-    std::string tag;
+    int id{-1};
+    std::string tag{"primary"};
     std::string programName;
     std::string configPath;
 };
 
 struct ConfigFiles {
     // int uuid;
-    int id;
-    int programId;
+    int id{-1};
+    int programId{-1};
     std::string filePath;
     std::string lastModified;
 };
+
+void insertConfig(auto storage, Config cfg, std::vector<ConfigFiles> cfgFiles) {
+    int programId = storage.insert(cfg);
+    std::cout << "insertedId = " << programId << std::endl;
+    cfg.id = programId;
+
+    for (auto& cfgFile : cfgFiles) {
+        cfgFile.programId = programId;
+        int fileId = storage.insert(cfgFile);
+        std::cout << "insertedId = " << fileId << std::endl;
+        cfgFile.id = fileId;
+    }
+}
 
 void createDb() {
     std::cout << "Creating table...\n";
@@ -37,14 +51,23 @@ void createDb() {
             make_column("files", &ConfigFiles::filePath),
             make_column("last_modified", &ConfigFiles::lastModified),
             foreign_key(&ConfigFiles::programId).references(&Config::id)));
+
     storage.sync_schema();
 
     std::cout << "Created db.sqlite!\n";
-}
 
-void insertDb(auto storage, Config cfg, ConfigFiles cfgFiles) {
-    // Config cfg{-1, "primary", "kitty", "/home/aditya/.config/kitty/"};
-    auto insertedId = storage.insert(cfg);
-    std::cout << "insertedId = " << insertedId << std::endl;
-    cfg.id = insertedId;
+    Config cfg{.programName = "kitty",
+               .configPath = "/home/aditya/.config/kitty/"};
+
+    ConfigFiles cfgFile1{.filePath = "/home/aditya/.config/kitty/kitty.conf",
+                         .lastModified = "349822"};
+    ConfigFiles cfgFile2{.filePath =
+                             "/home/aditya/.config/kitty/kitty.conf.bak",
+                         .lastModified = "349822"};
+    ConfigFiles cfgFile3{.filePath =
+                             "/home/aditya/.config/kitty/current-theme.conf",
+                         .lastModified = "349822"};
+    std::vector<ConfigFiles> cfgFiles{cfgFile1, cfgFile2, cfgFile3};
+
+    insertConfig(storage, cfg, cfgFiles);
 }
