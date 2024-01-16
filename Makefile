@@ -16,6 +16,7 @@ all: $(BIN_PATH)
 run: $(BIN_PATH)
 	$(BIN_PATH) add kitty rofi
 	sqlite3 $(DB_FILE) 'SELECT * FROM config_programs;'
+	sqlite3 $(DB_FILE) 'SELECT * FROM config_files;'
 
 $(BIN_PATH): $(SRC)/*
 	$(CXX) $(STD) $(FLAGS) -I$(INCLUDE) -l$(SQLITE3) $? -o $@
