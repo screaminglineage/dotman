@@ -112,7 +112,8 @@ int main(int argc, char* argv[]) {
         }
 
         // add configs to DB
-        createDb(cfg, files);
+        auto storage = createDb(cfg, files);
+        insertConfig(storage, cfg, files);
     }
 
     return 0;
