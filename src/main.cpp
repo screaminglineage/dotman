@@ -1,3 +1,4 @@
+#include "database.h"
 #include <chrono>
 #include <filesystem>
 #include <iostream>
@@ -6,7 +7,6 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-
 namespace fs = std::filesystem;
 using namespace std::chrono_literals;
 
@@ -20,30 +20,30 @@ struct CLIOption {
     const char* short_option{};
 };
 
-struct File {
-    fs::path filepath{};
-    time_t lastModified{};
-};
-
-struct ConfigFilesData {
-    std::string programTitle{};
-    fs::path directory{};
-    std::vector<File> files{};
-
-    void print() {
-        std::cout << '\n';
-        std::cout << "Title: " << this->programTitle << '\n';
-        std::cout << "Path: " << this->directory << '\n';
-
-        std::cout << "Files:\n";
-        auto i = 1;
-        for (const auto& file : this->files) {
-            std::cout << '[' << i << "] " << file.filepath << " ("
-                      << file.lastModified << ")\n";
-            i++;
-        }
-    }
-};
+// struct File {
+//     fs::path filepath{};
+//     time_t lastModified{};
+// };
+//
+// struct ConfigFilesData {
+//     std::string programTitle{};
+//     fs::path directory{};
+//     std::vector<File> files{};
+//
+//     void print() {
+//         std::cout << '\n';
+//         std::cout << "Title: " << this->programTitle << '\n';
+//         std::cout << "Path: " << this->directory << '\n';
+//
+//         std::cout << "Files:\n";
+//         auto i = 1;
+//         for (const auto& file : this->files) {
+//             std::cout << '[' << i << "] " << file.filepath << " ("
+//                       << file.lastModified << ")\n";
+//             i++;
+//         }
+//     }
+// };
 
 auto parseArguments(VecStr& args) {
     std::unordered_map<std::string_view, VecStr> argOptions{};
@@ -90,30 +90,30 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    std::vector<ConfigFilesData> configs{};
     for (const auto& programTitle : programTitles) {
         auto dirPath{configPath / fs::path{programTitle}};
 
+        Config cfg{.programName = std::string{programTitle},
+                   .configPath = dirPath};
         if (!fs::exists(dirPath)) {
             std::cerr << "error: " << dirPath << " not found!\n";
             return 1;
         }
 
-        std::vector<File> files{};
+        std::vector<ConfigFiles> files{};
         for (const auto& file : fs::recursive_directory_iterator(dirPath)) {
             namespace chrono = std::chrono;
             auto time = fs::last_write_time(file);
             auto lastWriteTime = chrono::system_clock::to_time_t(
                 chrono::clock_cast<chrono::system_clock>(time));
 
-            files.push_back(File{file, lastWriteTime});
+            files.push_back(ConfigFiles{.filePath = file.path().string(),
+                                        .lastModified = lastWriteTime});
         }
 
-        ConfigFilesData config{std::string{programTitle}, dirPath, files};
-        // configs.push_back(config);
-        config.print();
+        // add configs to DB
     }
-    createDb();
+    // createDb();
 
     return 0;
 }

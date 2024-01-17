@@ -18,7 +18,7 @@ run: $(BIN_PATH)
 	sqlite3 $(DB_FILE) 'SELECT * FROM config_programs;'
 	sqlite3 $(DB_FILE) 'SELECT * FROM config_files;'
 
-$(BIN_PATH): $(SRC)/*
+$(BIN_PATH): $(SRC)/*.cpp
 	$(CXX) $(STD) $(FLAGS) -I$(INCLUDE) -l$(SQLITE3) $? -o $@
 
 deldb:

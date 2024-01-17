@@ -3,21 +3,7 @@
 #include <string>
 #include <vector>
 
-struct Config {
-    // int uuid;
-    int id{-1};
-    std::string tag{"primary"};
-    std::string programName;
-    std::string configPath;
-};
-
-struct ConfigFiles {
-    // int uuid;
-    int id{-1};
-    int programId{-1};
-    std::string filePath;
-    std::string lastModified;
-};
+#include "database.h"
 
 void insertConfig(auto storage, Config cfg, std::vector<ConfigFiles> cfgFiles) {
     int programId = storage.insert(cfg);
@@ -59,15 +45,15 @@ void createDb() {
     Config cfg{.programName = "kitty",
                .configPath = "/home/aditya/.config/kitty/"};
 
-    ConfigFiles cfgFile1{.filePath = "/home/aditya/.config/kitty/kitty.conf",
-                         .lastModified = "349822"};
-    ConfigFiles cfgFile2{.filePath =
-                             "/home/aditya/.config/kitty/kitty.conf.bak",
-                         .lastModified = "349822"};
-    ConfigFiles cfgFile3{.filePath =
-                             "/home/aditya/.config/kitty/current-theme.conf",
-                         .lastModified = "349822"};
-    std::vector<ConfigFiles> cfgFiles{cfgFile1, cfgFile2, cfgFile3};
-
-    insertConfig(storage, cfg, cfgFiles);
+    // ConfigFiles cfgFile1{.filePath = "/home/aditya/.config/kitty/kitty.conf",
+    //                      .lastModified = "349822"};
+    // ConfigFiles cfgFile2{.filePath =
+    //                          "/home/aditya/.config/kitty/kitty.conf.bak",
+    //                      .lastModified = "349822"};
+    // ConfigFiles cfgFile3{.filePath =
+    //                          "/home/aditya/.config/kitty/current-theme.conf",
+    //                      .lastModified = "349822"};
+    // std::vector<ConfigFiles> cfgFiles{cfgFile1, cfgFile2, cfgFile3};
+    //
+    // insertConfig(storage, cfg, cfgFiles);
 }
