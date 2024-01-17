@@ -1,16 +1,25 @@
 #pragma once
 #include "../include/sqlite_orm/sqlite_orm.h"
-#include <cassert>
 #include <chrono>
 #include <iostream>
 #include <string>
 #include <vector>
 
+#define ASSERT_WITH_MSG(cond, msg)                                             \
+    do {                                                                       \
+        if (!(cond)) {                                                         \
+            std::ostringstream str;                                            \
+            str << "Assertion Failed! " << msg;                                \
+            std::cerr << str.str();                                            \
+            std::abort();                                                      \
+        }                                                                      \
+    } while (0)
+
 struct ProgramData {
     // int uuid;
     int id{-1};
     std::string tag{"primary"};
-    std::string programName;
+    std::string title;
     std::string configPath;
 };
 
@@ -27,7 +36,7 @@ struct ConfigProgram {
     std::vector<ConfigFile> files;
 };
 
-inline auto createDb(ProgramData& cfg, std::vector<ConfigFile>& cfgFiles) {
+inline auto createDb() {
     std::cout << "Creating table...\n";
 
     using namespace sqlite_orm;
@@ -37,7 +46,7 @@ inline auto createDb(ProgramData& cfg, std::vector<ConfigFile>& cfgFiles) {
             "config_programs",
             make_column("id", &ProgramData::id, primary_key().autoincrement()),
             make_column("tag", &ProgramData::tag),
-            make_column("programName", &ProgramData::programName),
+            make_column("programName", &ProgramData::title),
             make_column("configPath", &ProgramData::configPath)),
         make_table(
             "config_files",
@@ -68,13 +77,26 @@ inline void insertConfig(auto& storage, ProgramData& cfg,
     }
 }
 
-ConfigProgram getProgramData(auto& storage, std::string_view programTitle,
-                             std::string_view tag) {
+// Returns the data for the program given its title and tag
+// The return value is an iterable object with each element of type ConfigFile
+inline auto getProgramData(auto storage, std::string_view programTitle,
+                           std::string_view programTag = "primary") {
     using namespace sqlite_orm;
-    auto selectStatement = storage.prepare(
-        select(&ProgramData::programName,
-               where((c(&ProgramData::programName) == programTitle))));
+    auto data = storage.select(&ProgramData::id,
+                               where(c(&ProgramData::title) == programTitle and
+                                     c(&ProgramData::tag) == programTag));
 
-    auto rows = storage.execute(selectStatement);
-    static_assert(0, "TODO");
+    ASSERT_WITH_MSG(
+        data.size() == 1,
+        std::format(
+            "Title: `{}` and Tag: `{}` must uniquely identify a single element",
+            programTitle, programTag));
+
+    int programId = data[0];
+    std::cout << programId << '\n';
+
+    auto fileData = storage.select(
+        object<ConfigFile>(), where(c(&ConfigFile::programId) == programId));
+
+    return fileData;
 }

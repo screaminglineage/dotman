@@ -65,8 +65,6 @@ auto parseArguments(VecStr& args) {
     return argOptions;
 }
 
-void createDb();
-
 int main(int argc, char* argv[]) {
 
     std::string_view program{*argv};
@@ -90,10 +88,11 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    auto storage = createDb();
     for (const auto& programTitle : programTitles) {
         auto dirPath{configPath / fs::path{programTitle}};
 
-        ProgramData cfg{.programName = std::string{programTitle},
+        ProgramData cfg{.title = std::string{programTitle},
                         .configPath = dirPath};
         if (!fs::exists(dirPath)) {
             std::cerr << "error: " << dirPath << " not found!\n";
@@ -112,9 +111,11 @@ int main(int argc, char* argv[]) {
         }
 
         // add configs to DB
-        auto storage = createDb(cfg, files);
         insertConfig(storage, cfg, files);
     }
+
+    getProgramData(storage, "kitty");
+    getProgramData(storage, "rofi");
 
     return 0;
 }
