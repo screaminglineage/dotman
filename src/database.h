@@ -1,5 +1,6 @@
 #pragma once
 #include "../include/sqlite_orm/sqlite_orm.h"
+#include <cassert>
 #include <chrono>
 #include <iostream>
 #include <string>
@@ -65,4 +66,15 @@ inline void insertConfig(auto& storage, ProgramData& cfg,
         std::cout << "insertedId = " << fileId << '\n';
         cfgFile.id = fileId;
     }
+}
+
+ConfigProgram getProgramData(auto& storage, std::string_view programTitle,
+                             std::string_view tag) {
+    using namespace sqlite_orm;
+    auto selectStatement = storage.prepare(
+        select(&ProgramData::programName,
+               where((c(&ProgramData::programName) == programTitle))));
+
+    auto rows = storage.execute(selectStatement);
+    static_assert(0, "TODO");
 }
