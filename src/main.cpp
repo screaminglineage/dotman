@@ -93,8 +93,8 @@ int main(int argc, char* argv[]) {
     for (const auto& programTitle : programTitles) {
         auto dirPath{configPath / fs::path{programTitle}};
 
-        ConfigProgram cfg{.programName = std::string{programTitle},
-                          .configPath = dirPath};
+        ProgramData cfg{.programName = std::string{programTitle},
+                        .configPath = dirPath};
         if (!fs::exists(dirPath)) {
             std::cerr << "error: " << dirPath << " not found!\n";
             return 1;

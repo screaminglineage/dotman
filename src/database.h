@@ -1,8 +1,9 @@
 #pragma once
 #include <chrono>
 #include <string>
+#include <vector>
 
-struct ConfigProgram {
+struct ProgramData {
     // int uuid;
     int id{-1};
     std::string tag{"primary"};
@@ -18,4 +19,9 @@ struct ConfigFile {
     std::time_t lastModified;
 };
 
-void createDb(ConfigProgram cfg, std::vector<ConfigFile> cfgFiles);
+struct ConfigProgram {
+    ProgramData data;
+    std::vector<ConfigFile> files;
+};
+
+void createDb(ProgramData& cfg, std::vector<ConfigFile>& cfgFiles);
