@@ -43,10 +43,10 @@ inline auto createDb() {
     auto storage = make_storage(
         "db.sqlite",
         make_table(
-            "config_programs",
+            "programs",
             make_column("id", &ProgramData::id, primary_key().autoincrement()),
             make_column("tag", &ProgramData::tag),
-            make_column("programName", &ProgramData::title),
+            make_column("title", &ProgramData::title),
             make_column("configPath", &ProgramData::configPath)),
         make_table(
             "config_files",
@@ -63,8 +63,26 @@ inline auto createDb() {
     return storage;
 }
 
-inline void insertConfig(auto& storage, ProgramData& cfg,
-                         std::vector<ConfigFile>& cfgFiles) {
+// check if a program with the given title and tag already exists
+inline bool configExists(auto& storage, std::string_view programTitle,
+                         std::string_view programTag) {
+    using namespace sqlite_orm;
+    auto data = storage.select(&ProgramData::id,
+                               where(c(&ProgramData::title) == programTitle and
+                                     c(&ProgramData::tag) == programTag));
+
+    return !data.empty();
+}
+
+// inserts configs for a program and all of its files into the DB
+inline int insertConfig(auto& storage, ProgramData& cfg,
+                        std::vector<ConfigFile>& cfgFiles) {
+
+    bool exists = configExists(storage, cfg.title, cfg.tag);
+    if (exists) {
+        return 1;
+    }
+
     int programId = storage.insert(cfg);
     std::cout << "insertedId = " << programId << '\n';
     cfg.id = programId;
@@ -72,9 +90,9 @@ inline void insertConfig(auto& storage, ProgramData& cfg,
     for (auto& cfgFile : cfgFiles) {
         cfgFile.programId = programId;
         int fileId = storage.insert(cfgFile);
-        std::cout << "insertedId = " << fileId << '\n';
         cfgFile.id = fileId;
     }
+    return 0;
 }
 
 // Returns the data for the program given its title and tag
@@ -93,7 +111,6 @@ inline auto getProgramData(auto storage, std::string_view programTitle,
             programTitle, programTag));
 
     int programId = data[0];
-    std::cout << programId << '\n';
 
     auto fileData = storage.select(
         object<ConfigFile>(), where(c(&ConfigFile::programId) == programId));

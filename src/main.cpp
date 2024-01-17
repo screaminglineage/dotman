@@ -1,6 +1,7 @@
 #include "database.h"
 #include <chrono>
 #include <filesystem>
+#include <format>
 #include <iostream>
 #include <string>
 #include <string_view>
@@ -19,31 +20,6 @@ struct CLIOption {
     const char* long_option{};
     const char* short_option{};
 };
-
-// struct File {
-//     fs::path filepath{};
-//     time_t lastModified{};
-// };
-//
-// struct ConfigFilesData {
-//     std::string programTitle{};
-//     fs::path directory{};
-//     std::vector<File> files{};
-//
-//     void print() {
-//         std::cout << '\n';
-//         std::cout << "Title: " << this->programTitle << '\n';
-//         std::cout << "Path: " << this->directory << '\n';
-//
-//         std::cout << "Files:\n";
-//         auto i = 1;
-//         for (const auto& file : this->files) {
-//             std::cout << '[' << i << "] " << file.filepath << " ("
-//                       << file.lastModified << ")\n";
-//             i++;
-//         }
-//     }
-// };
 
 auto parseArguments(VecStr& args) {
     std::unordered_map<std::string_view, VecStr> argOptions{};
@@ -65,30 +41,7 @@ auto parseArguments(VecStr& args) {
     return argOptions;
 }
 
-int main(int argc, char* argv[]) {
-
-    std::string_view program{*argv};
-    VecStr args(argv + 1, argv + argc);
-
-    auto argOptions = parseArguments(args);
-
-    std::cerr << program << '\n' << "Args: ";
-    for (const auto& it : argOptions) {
-        std::cerr << it.first << ' ';
-        for (const auto& j : it.second) {
-            std::cerr << j << ' ';
-        }
-    }
-    std::cerr << '\n';
-
-    auto programTitles{argOptions["add"]};
-
-    if (programTitles.empty()) {
-        std::cerr << "error: no path specified!\n";
-        return 1;
-    }
-
-    auto storage = createDb();
+int addPrograms(auto& storage, VecStr& programTitles) {
     for (const auto& programTitle : programTitles) {
         auto dirPath{configPath / fs::path{programTitle}};
 
@@ -96,7 +49,7 @@ int main(int argc, char* argv[]) {
                         .configPath = dirPath};
         if (!fs::exists(dirPath)) {
             std::cerr << "error: " << dirPath << " not found!\n";
-            return 1;
+            continue;
         }
 
         std::vector<ConfigFile> files{};
@@ -111,11 +64,42 @@ int main(int argc, char* argv[]) {
         }
 
         // add configs to DB
-        insertConfig(storage, cfg, files);
+        if (insertConfig(storage, cfg, files) != 0) {
+            std::cerr << std::format(
+                "Config: {} with tag `{}` already exists!\n", cfg.title,
+                cfg.tag);
+            continue;
+        }
+    }
+    return 0;
+}
+
+int main(int argc, char* argv[]) {
+
+    std::string_view program{*argv};
+    VecStr args(argv + 1, argv + argc);
+
+    auto argOptions = parseArguments(args);
+    auto programTitles{argOptions["add"]};
+
+    if (programTitles.empty()) {
+        std::cerr << "error: no path specified!\n";
+        return 1;
     }
 
-    getProgramData(storage, "kitty");
-    getProgramData(storage, "rofi");
+    auto storage = createDb();
+    if (addPrograms(storage, programTitles) != 0)
+        return 1;
+
+    auto data1 = getProgramData(storage, "kitty");
+    for (const auto& file : data1) {
+        std::cout << file.filePath << ' ' << file.lastModified << std::endl;
+    }
+
+    auto data2 = getProgramData(storage, "rofi");
+    for (const auto& file : data2) {
+        std::cout << file.filePath << ' ' << file.lastModified << std::endl;
+    }
 
     return 0;
 }
