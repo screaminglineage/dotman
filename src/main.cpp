@@ -93,22 +93,22 @@ int main(int argc, char* argv[]) {
     for (const auto& programTitle : programTitles) {
         auto dirPath{configPath / fs::path{programTitle}};
 
-        Config cfg{.programName = std::string{programTitle},
-                   .configPath = dirPath};
+        ConfigProgram cfg{.programName = std::string{programTitle},
+                          .configPath = dirPath};
         if (!fs::exists(dirPath)) {
             std::cerr << "error: " << dirPath << " not found!\n";
             return 1;
         }
 
-        std::vector<ConfigFiles> files{};
+        std::vector<ConfigFile> files{};
         for (const auto& file : fs::recursive_directory_iterator(dirPath)) {
             namespace chrono = std::chrono;
             auto time = fs::last_write_time(file);
             auto lastWriteTime = chrono::system_clock::to_time_t(
                 chrono::clock_cast<chrono::system_clock>(time));
 
-            files.push_back(ConfigFiles{.filePath = file.path().string(),
-                                        .lastModified = lastWriteTime});
+            files.push_back(ConfigFile{.filePath = file.path().string(),
+                                       .lastModified = lastWriteTime});
         }
 
         // add configs to DB

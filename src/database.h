@@ -2,7 +2,7 @@
 #include <chrono>
 #include <string>
 
-struct Config {
+struct ConfigProgram {
     // int uuid;
     int id{-1};
     std::string tag{"primary"};
@@ -10,7 +10,7 @@ struct Config {
     std::string configPath;
 };
 
-struct ConfigFiles {
+struct ConfigFile {
     // int uuid;
     int id{-1};
     int programId{-1};
@@ -18,4 +18,4 @@ struct ConfigFiles {
     std::time_t lastModified;
 };
 
-void createDb(Config cfg, std::vector<ConfigFiles> cfgFiles);
+void createDb(ConfigProgram cfg, std::vector<ConfigFile> cfgFiles);

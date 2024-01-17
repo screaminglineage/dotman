@@ -5,7 +5,8 @@
 
 #include "database.h"
 
-void insertConfig(auto storage, Config cfg, std::vector<ConfigFiles> cfgFiles) {
+void insertConfig(auto storage, ConfigProgram cfg,
+                  std::vector<ConfigFile> cfgFiles) {
     int programId = storage.insert(cfg);
     std::cout << "insertedId = " << programId << '\n';
     cfg.id = programId;
@@ -18,25 +19,26 @@ void insertConfig(auto storage, Config cfg, std::vector<ConfigFiles> cfgFiles) {
     }
 }
 
-void createDb(Config cfg, std::vector<ConfigFiles> cfgFiles) {
+void createDb(ConfigProgram cfg, std::vector<ConfigFile> cfgFiles) {
     std::cout << "Creating table...\n";
 
     using namespace sqlite_orm;
     auto storage = make_storage(
         "db.sqlite",
-        make_table(
-            "config_programs",
-            make_column("id", &Config::id, primary_key().autoincrement()),
-            make_column("tag", &Config::tag),
-            make_column("programName", &Config::programName),
-            make_column("configPath", &Config::configPath)),
+        make_table("config_programs",
+                   make_column("id", &ConfigProgram::id,
+                               primary_key().autoincrement()),
+                   make_column("tag", &ConfigProgram::tag),
+                   make_column("programName", &ConfigProgram::programName),
+                   make_column("configPath", &ConfigProgram::configPath)),
         make_table(
             "config_files",
-            make_column("id", &ConfigFiles::id, primary_key().autoincrement()),
-            make_column("program_id", &ConfigFiles::programId),
-            make_column("files", &ConfigFiles::filePath),
-            make_column("last_modified", &ConfigFiles::lastModified),
-            foreign_key(&ConfigFiles::programId).references(&Config::id)));
+            make_column("id", &ConfigFile::id, primary_key().autoincrement()),
+            make_column("program_id", &ConfigFile::programId),
+            make_column("files", &ConfigFile::filePath),
+            make_column("last_modified", &ConfigFile::lastModified),
+            foreign_key(&ConfigFile::programId)
+                .references(&ConfigProgram::id)));
 
     storage.sync_schema();
 
