@@ -1,5 +1,5 @@
 #pragma once
-#include "../include/sqlite_orm/sqlite_orm.h"
+#include "sqlite_orm/sqlite_orm.h"
 #include <chrono>
 #include <iostream>
 #include <string>
@@ -19,16 +19,16 @@ struct ProgramData {
     // int uuid;
     int id{-1};
     std::string tag{"primary"};
-    std::string title;
-    std::string configPath;
+    std::string title{};
+    std::string configPath{};
 };
 
 struct ConfigFile {
     // int uuid;
     int id{-1};
     int programId{-1};
-    std::string filePath;
-    std::time_t lastModified;
+    std::string filePath{};
+    std::time_t lastModified{};
 };
 
 struct ConfigProgram {
