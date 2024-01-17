@@ -17,3 +17,5 @@ struct ConfigFiles {
     std::string filePath;
     std::time_t lastModified;
 };
+
+void createDb(Config cfg, std::vector<ConfigFiles> cfgFiles);

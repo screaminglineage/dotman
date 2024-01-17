@@ -112,8 +112,8 @@ int main(int argc, char* argv[]) {
         }
 
         // add configs to DB
+        createDb(cfg, files);
     }
-    // createDb();
 
     return 0;
 }

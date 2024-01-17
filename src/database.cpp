@@ -7,18 +7,18 @@
 
 void insertConfig(auto storage, Config cfg, std::vector<ConfigFiles> cfgFiles) {
     int programId = storage.insert(cfg);
-    std::cout << "insertedId = " << programId << std::endl;
+    std::cout << "insertedId = " << programId << '\n';
     cfg.id = programId;
 
     for (auto& cfgFile : cfgFiles) {
         cfgFile.programId = programId;
         int fileId = storage.insert(cfgFile);
-        std::cout << "insertedId = " << fileId << std::endl;
+        std::cout << "insertedId = " << fileId << '\n';
         cfgFile.id = fileId;
     }
 }
 
-void createDb() {
+void createDb(Config cfg, std::vector<ConfigFiles> cfgFiles) {
     std::cout << "Creating table...\n";
 
     using namespace sqlite_orm;
@@ -42,8 +42,8 @@ void createDb() {
 
     std::cout << "Created db.sqlite!\n";
 
-    Config cfg{.programName = "kitty",
-               .configPath = "/home/aditya/.config/kitty/"};
+    // Config cfg{.programName = "kitty",
+    //            .configPath = "/home/aditya/.config/kitty/"};
 
     // ConfigFiles cfgFile1{.filePath = "/home/aditya/.config/kitty/kitty.conf",
     //                      .lastModified = "349822"};
@@ -55,5 +55,5 @@ void createDb() {
     //                      .lastModified = "349822"};
     // std::vector<ConfigFiles> cfgFiles{cfgFile1, cfgFile2, cfgFile3};
     //
-    // insertConfig(storage, cfg, cfgFiles);
+    insertConfig(storage, cfg, cfgFiles);
 }
