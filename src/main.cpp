@@ -101,5 +101,7 @@ int main(int argc, char* argv[]) {
         std::cout << file.filePath << ' ' << file.lastModified << std::endl;
     }
 
+    syncFiles(storage, getProgramId(storage, "kitty"));
+
     return 0;
 }

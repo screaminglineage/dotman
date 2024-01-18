@@ -4,6 +4,8 @@
 #include <filesystem>
 #include <iostream>
 #include <string>
+#include <string_view>
+#include <system_error>
 #include <vector>
 
 #define ASSERT_WITH_MSG(cond, msg)                                             \
@@ -53,7 +55,7 @@ inline auto createDb() {
             "config_files",
             make_column("id", &ConfigFile::id, primary_key().autoincrement()),
             make_column("program_id", &ConfigFile::programId),
-            make_column("files", &ConfigFile::filePath),
+            make_column("file_path", &ConfigFile::filePath),
             make_column("last_modified", &ConfigFile::lastModified),
             foreign_key(&ConfigFile::programId).references(&ProgramData::id)));
 
@@ -123,23 +125,31 @@ inline auto getProgramData(auto storage, int programId) {
     return fileData;
 }
 
-inline void syncFiles(auto storage, int programId) {
+using Storage = decltype(createDb());
+
+inline void syncFiles(Storage storage, int programId) {
     using namespace sqlite_orm;
     namespace fs = std::filesystem;
 
-    auto configDir = storage.select(&ProgramData::configDir,
-                                    where(c(&ProgramData::id) == programId));
+    auto program = storage.get<ProgramData>(programId);
+
     ASSERT_WITH_MSG(
-        fs::exists(configDir),
-        std::format("Config directory: {} doesnt exist!", configDir));
+        fs::exists(program.configDir),
+        std::format("Config directory: {} doesnt exist!", program.configDir));
 
-    // loop through each file in config dir
-    // check if it exists in db
-    // if it does not then add it to be copied and then added to db
-    // if it exists but has a newer time then do the same
-    // otherwise continue
+    for (const auto& file :
+         fs::recursive_directory_iterator(program.configDir)) {
 
-    // for (const auto& file : fs::recursive_directory_iterator(configDir)) {
-    //     storage.select()
-    // }
+        auto dbFile = storage.get_all<ConfigFile>(
+            where(c(&ConfigFile::filePath) == file.path().string()));
+
+        ASSERT_WITH_MSG(dbFile.size() <= 1,
+                        "Cannot have multiple files with same path");
+
+        if (!dbFile.empty()) {
+            std::cout << dbFile[0].lastModified << std::endl;
+        } else {
+            std::cout << "new file!" << std::endl;
+        }
+    }
 }
