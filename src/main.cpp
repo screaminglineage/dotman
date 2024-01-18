@@ -46,7 +46,7 @@ int addPrograms(auto& storage, VecStr& programTitles) {
         auto dirPath{configPath / fs::path{programTitle}};
 
         ProgramData cfg{.title = std::string{programTitle},
-                        .configPath = dirPath};
+                        .configDir = dirPath};
         if (!fs::exists(dirPath)) {
             std::cerr << "error: " << dirPath << " not found!\n";
             continue;
@@ -91,12 +91,12 @@ int main(int argc, char* argv[]) {
     if (addPrograms(storage, programTitles) != 0)
         return 1;
 
-    auto data1 = getProgramData(storage, "kitty");
+    auto data1 = getProgramData(storage, getProgramId(storage, "kitty"));
     for (const auto& file : data1) {
         std::cout << file.filePath << ' ' << file.lastModified << std::endl;
     }
 
-    auto data2 = getProgramData(storage, "rofi");
+    auto data2 = getProgramData(storage, getProgramId(storage, "kitty"));
     for (const auto& file : data2) {
         std::cout << file.filePath << ' ' << file.lastModified << std::endl;
     }
