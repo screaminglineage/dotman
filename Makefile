@@ -8,6 +8,7 @@ SRC = ./src
 BUILD = ./build
 SQLITE3 = sqlite3
 BIN_PATH = $(BUILD)/$(BIN)
+TEMP_BACKUP_DIR = ./backup_temp/*
 
 .PHONY: all run deldb clean
 all: $(BIN_PATH)
@@ -25,7 +26,7 @@ $(BIN_PATH): $(SRC)/*.cpp
 
 deldb:
 	rm $(DB_FILE)
-	rm -rf backup_temp/*
+	rm -rf $(TEMP_BACKUP_DIR)/*
 
 clean:
 	rm $(BIN_PATH)
