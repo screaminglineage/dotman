@@ -89,11 +89,14 @@ inline int insertConfig(auto& storage, ProgramData& cfg,
     std::cout << "insertedId = " << programId << '\n';
     cfg.id = programId;
 
-    for (auto& cfgFile : cfgFiles) {
-        cfgFile.programId = programId;
-        int fileId = storage.insert(cfgFile);
-        cfgFile.id = fileId;
-    }
+    storage.transaction([&] {
+        for(auto& cfgFile: cfgFiles) {
+            cfgFile.programId = programId;
+            int fileId = storage.insert(cfgFile);
+            cfgFile.id = fileId;
+        }
+        return true;  //  commit
+    });
     return 0;
 }
 
