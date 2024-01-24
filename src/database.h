@@ -80,11 +80,11 @@ inline bool configExists(Storage& storage, std::string_view programTitle,
 }
 
 // inserts configs for a program and all of its files into the DB
-inline int insertConfig(Storage& storage, ProgramData& cfg,
+inline bool insertConfig(Storage& storage, ProgramData& cfg,
                         std::vector<ConfigFile>& cfgFiles) {
 
     if (configExists(storage, cfg.title, cfg.tag)) {
-        return 1;
+        return false;
     }
 
     int programId = storage.insert(cfg);
@@ -99,7 +99,7 @@ inline int insertConfig(Storage& storage, ProgramData& cfg,
         }
         return true;  //  commit
     });
-    return 0;
+    return true;
 }
 
 // Returns the ID for a program given its title and tag
@@ -144,16 +144,23 @@ inline void syncFiles(Storage& storage, int programId) {
     for (const auto& file :
          fs::recursive_directory_iterator(program.configDir)) {
 
-        auto dbFile = storage.get_all<ConfigFile>(
+        auto dbFiles = storage.get_all<ConfigFile>(
             where(c(&ConfigFile::filePath) == file.path().string()));
 
-        ASSERT_WITH_MSG(dbFile.size() <= 1,
+        ASSERT_WITH_MSG(dbFiles.size() <= 1,
                         "Cannot have multiple files with same path");
 
-        if (!dbFile.empty()) {
-            std::cout << dbFile[0].lastModified << std::endl;
+        if (!dbFiles.empty()) {
+            namespace chrono = std::chrono;
+
+            auto time = fs::last_write_time(file);
+            auto lastWriteTimeFile = chrono::system_clock::to_time_t(
+                chrono::clock_cast<chrono::system_clock>(time));
+            
+            std::cout << ((lastWriteTimeFile > dbFiles[0].lastModified)? "Filesystem is newer!": "Database is synced!") << '\n';
+
         } else {
-            std::cout << "new file!" << std::endl;
+            std::cout << "File not in Database!" << std::endl;
         }
     }
 }
