@@ -8,6 +8,12 @@
 #include <system_error>
 #include <vector>
 
+// TODO: remove these eventually
+namespace paths {
+const std::filesystem::path configPath{"/home/aditya/.config/"};
+const std::filesystem::path backupPath{"/mnt/Other-Stuff/Programming/C++/dotman/backup_temp/"};
+}
+
 #define ASSERT_WITH_MSG(cond, msg)                                             \
     do {                                                                       \
         if (!(cond)) {                                                         \
@@ -50,7 +56,7 @@ inline auto createDb() {
             make_column("id", &ProgramData::id, primary_key().autoincrement()),
             make_column("tag", &ProgramData::tag),
             make_column("title", &ProgramData::title),
-            make_column("configPath", &ProgramData::configDir)),
+            make_column("config_path", &ProgramData::configDir)),
         make_table(
             "config_files",
             make_column("id", &ConfigFile::id, primary_key().autoincrement()),
@@ -131,7 +137,12 @@ inline auto getProgramData(Storage& storage, int programId) {
 }
 
 
-inline void syncFiles(Storage& storage, int programId) {
+// TODO: return a vector of all the paths that need to be synced
+// when file in db but not in backup, file in db but older than actual, file not in db
+//
+// if checkBackupDir is set to true, the function checks for each file in 
+// the backup directory and if the file doesnt exist then copies it over
+inline void syncFiles(Storage& storage, int programId, bool checkBackupDir = true) {
     using namespace sqlite_orm;
     namespace fs = std::filesystem;
 
@@ -151,12 +162,23 @@ inline void syncFiles(Storage& storage, int programId) {
                         "Cannot have multiple files with same path");
 
         if (!dbFiles.empty()) {
+            // TODO: extract out getting the time into a function
             namespace chrono = std::chrono;
 
             auto time = fs::last_write_time(file);
             auto lastWriteTimeFile = chrono::system_clock::to_time_t(
                 chrono::clock_cast<chrono::system_clock>(time));
-            
+
+            if (checkBackupDir) {
+                // replaces prefix `configPath` with `backupPath` in the full file path
+                fs::path originalConfigPath = file.path().lexically_relative(paths::configPath).lexically_normal();
+                fs::path backupConfigPath = paths::backupPath / originalConfigPath;
+
+                if (!fs::exists(backupConfigPath)) {
+                    std::cout << "unsynced file: " << backupConfigPath << '\n';
+                }
+            }
+
             std::cout << ((lastWriteTimeFile > dbFiles[0].lastModified)? "Filesystem is newer!": "Database is synced!") << '\n';
 
         } else {

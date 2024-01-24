@@ -25,6 +25,7 @@ $(BIN_PATH): $(SRC)/*.cpp
 
 deldb:
 	rm $(DB_FILE)
+	rm -rf backup_temp/*
 
 clean:
 	rm $(BIN_PATH)

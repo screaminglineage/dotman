@@ -11,7 +11,6 @@
 namespace fs = std::filesystem;
 using namespace std::chrono_literals;
 
-const std::filesystem::path configPath{"/home/aditya/.config/"};
 const std::unordered_set<std::string_view> options{"add", "sync"};
 
 using VecStr = std::vector<std::string_view>;
@@ -43,7 +42,7 @@ auto parseArguments(VecStr& args) {
 
 bool addPrograms(auto& storage, VecStr& programTitles) {
     for (const auto& programTitle : programTitles) {
-        auto dirPath{configPath / fs::path{programTitle}};
+        auto dirPath{paths::configPath / fs::path{programTitle}};
 
         ProgramData cfg{.title = std::string{programTitle},
                         .configDir = dirPath};
@@ -54,6 +53,7 @@ bool addPrograms(auto& storage, VecStr& programTitles) {
 
         std::vector<ConfigFile> files{};
         for (const auto& file : fs::recursive_directory_iterator(dirPath)) {
+            // TODO: extract out getting the time into a function
             namespace chrono = std::chrono;
             auto time = fs::last_write_time(file);
             auto lastWriteTime = chrono::system_clock::to_time_t(
@@ -70,6 +70,11 @@ bool addPrograms(auto& storage, VecStr& programTitles) {
                 cfg.tag);
             continue;
         }
+
+        // copy over files into backup dir
+        std::cout << std::format("Copying Files (`{}`) ...\n", programTitle);
+        auto programBackupPath{paths::backupPath / fs::path{programTitle}};
+        fs::copy(dirPath, programBackupPath, std::filesystem::copy_options::recursive);
     }
     return true;
 }

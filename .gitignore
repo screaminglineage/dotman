@@ -3,3 +3,4 @@ build/*
 .clangd
 # for testing
 db.sqlite 
+backup_temp/*
