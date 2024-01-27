@@ -3,10 +3,11 @@ FLAGS = -Wall -Weffc++ -Wextra -Wconversion -Wsign-conversion
 BIN = dotman
 DB_FILE = db.sqlite
 
-INCLUDE = include/
+INCLUDE = ./include
+LIB = ./lib
 SRC = ./src
 BUILD = ./build
-SQLITE3 = sqlite3
+SQLITE = sqlite3
 BIN_PATH = $(BUILD)/$(BIN)
 TEMP_BACKUP_DIR = ./backup_temp/*
 
@@ -22,11 +23,11 @@ run: $(BIN_PATH)
 	sqlite3 $(DB_FILE) 'SELECT * FROM config_files;'
 
 $(BIN_PATH): $(SRC)/*.cpp
-	$(CXX) $(STD) $(FLAGS) -isystem $(INCLUDE) -l$(SQLITE3) $? -o $@
+	$(CXX) $(STD) $(FLAGS) -isystem $(LIB) -I$(INCLUDE) -l$(SQLITE) $? -o $@
 
 deldb:
 	rm $(DB_FILE)
-	rm -rf $(TEMP_BACKUP_DIR)/*
+	rm -rf $(TEMP_BACKUP_DIR)
 
 clean:
 	rm $(BIN_PATH)
