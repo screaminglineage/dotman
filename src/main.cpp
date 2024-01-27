@@ -70,7 +70,7 @@ bool addPrograms(auto& storage, VecStr& programTitles) {
         // copy over files into backup dir
         std::cout << std::format("Copying Files (`{}`) ...\n", programTitle);
         auto programBackupPath{paths::backupPath / fs::path{programTitle}};
-        fs::copy(dirPath, programBackupPath, std::filesystem::copy_options::recursive);
+        fs::copy(dirPath, programBackupPath, fs::copy_options::recursive | fs::copy_options::update_existing);
     }
     return true;
 }
@@ -93,13 +93,18 @@ int main(int argc, char* argv[]) {
     if (!addPrograms(storage, programTitles))
         return 1;
 
-    auto data1 = getProgramData(storage, getProgramId(storage, "kitty"));
+    // for testing
+    auto data1 = getProgramData(storage, getProgramId(storage, "kitty", "primary"));
     for (const auto& file : data1) {
         std::cout << file.filePath << ' ' << file.lastModified << std::endl;
     }
 
     if (!syncPrograms.empty() && !syncPrograms[0].empty()) {
-        syncFiles(storage, getProgramId(storage, syncPrograms[0]));
+        if (!configExists(storage, syncPrograms[0], "primary")) {
+            std::cerr << std::format("Error: no such program added: `{}`\n", syncPrograms[0]);
+            return 1;
+        }
+        syncFiles(storage, getProgramId(storage, syncPrograms[0], "primary"));
     }
 
     return 0;

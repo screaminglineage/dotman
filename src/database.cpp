@@ -34,7 +34,7 @@ bool insertConfig(Storage& storage, ProgramData& cfg, std::vector<ConfigFile>& c
             int fileId = storage.insert(cfgFile);
             cfgFile.id = fileId;
         }
-        return true;  //  commit
+        return true;  //  commit db
     });
     return true;
 }
@@ -75,7 +75,7 @@ void syncFiles(Storage& storage, int programId, bool checkBackupDir) {
         std::format("Config directory: {} doesnt exist!", program.configDir));
 
     for (const auto& file :
-         fs::recursive_directory_iterator(program.configDir)) {
+    fs::recursive_directory_iterator(program.configDir)) {
 
         auto dbFiles = storage.get_all<ConfigFile>(
             where(c(&ConfigFile::filePath) == file.path().string()));
@@ -83,22 +83,22 @@ void syncFiles(Storage& storage, int programId, bool checkBackupDir) {
         ASSERT_WITH_MSG(dbFiles.size() <= 1,
                         "Cannot have multiple files with same path");
 
-        if (!dbFiles.empty()) {
-            auto lastWriteTimeFile = getlastWriteTime(file);
-            if (checkBackupDir) {
-                // replaces prefix `configPath` with `backupPath` in the full file path
-                fs::path originalConfigPath = file.path().lexically_relative(paths::configPath).lexically_normal();
-                fs::path backupConfigPath = paths::backupPath / originalConfigPath;
-
-                if (!fs::exists(backupConfigPath)) {
-                    std::cout << "unsynced file: " << backupConfigPath << '\n';
-                }
-            }
-
-            std::cout << ((lastWriteTimeFile > dbFiles[0].lastModified)? "Filesystem is newer!": "Database is synced!") << '\n';
-
-        } else {
+        if (dbFiles.empty()) {
             std::cout << "File not in Database!" << std::endl;
+            return;
         }
-    }
+        auto lastWriteTimeFile = getlastWriteTime(file);
+
+        // checks if the file is not present in the backup dir
+        if (checkBackupDir) {
+            // replaces prefix `configPath` with `backupPath` in the full file path
+            fs::path originalConfigPath = file.path().lexically_relative(paths::configPath).lexically_normal();
+            fs::path backupConfigPath = paths::backupPath / originalConfigPath;
+
+            if (!fs::exists(backupConfigPath)) {
+                std::cout << "unsynced file: " << backupConfigPath << '\n';
+            }
+        }
+        std::cout << ((lastWriteTimeFile > dbFiles[0].lastModified)? "Filesystem is newer!": "Database is synced!") << '\n';
+    } 
 }

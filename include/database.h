@@ -80,7 +80,7 @@ bool configExists(Storage& storage, std::string_view programTitle, std::string_v
 bool insertConfig(Storage& storage, ProgramData& cfg, std::vector<ConfigFile>& cfgFiles);
 
 // Returns the ID for a program given its title and tag
-int getProgramId(Storage& storage, std::string_view programTitle, std::string_view programTag = "primary");
+int getProgramId(Storage& storage, std::string_view programTitle, std::string_view programTag);
 
 // Get the all the file data for a particular program
 std::vector<ConfigFile> getProgramData(Storage& storage, int programId);
