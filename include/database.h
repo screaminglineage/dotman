@@ -44,7 +44,7 @@ struct ConfigProgram {
     std::vector<ConfigFile> files;
 };
 
-inline auto createDb() {
+inline auto initDb() {
     std::cout << "Creating table...\n";
 
     using namespace sqlite_orm;
@@ -71,7 +71,7 @@ inline auto createDb() {
     return storage;
 }
 
-using Storage = decltype(createDb());
+using Storage = decltype(initDb());
 
 // check if a program with the given title and tag already exists
 bool configExists(Storage& storage, std::string_view programTitle, std::string_view programTag);

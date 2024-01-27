@@ -41,6 +41,7 @@ auto parseArguments(VecStr& args) {
     return argOptions;
 }
 
+// TODO: add option to also pass in the tags along with the program titles
 bool addPrograms(auto& storage, VecStr& programTitles) {
     for (const auto& programTitle : programTitles) {
         auto dirPath{paths::configPath / fs::path{programTitle}};
@@ -69,8 +70,12 @@ bool addPrograms(auto& storage, VecStr& programTitles) {
 
         // copy over files into backup dir
         std::cout << std::format("Copying Files (`{}`) ...\n", programTitle);
-        auto programBackupPath{paths::backupPath / fs::path{programTitle}};
-        fs::copy(dirPath, programBackupPath, fs::copy_options::recursive | fs::copy_options::update_existing);
+        auto programBackupPath = paths::backupPath / fs::path{cfg.tag};
+        if (!fs::exists(programBackupPath)) {
+            fs::create_directory(programBackupPath);
+        }
+        fs::copy(dirPath, programBackupPath / fs::path{cfg.title}, 
+                 fs::copy_options::recursive | fs::copy_options::update_existing);
     }
     return true;
 }
@@ -89,7 +94,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    auto storage = createDb();
+    auto storage = initDb();
     if (!addPrograms(storage, programTitles))
         return 1;
 

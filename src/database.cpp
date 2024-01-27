@@ -94,7 +94,7 @@ void syncFiles(Storage& storage, int programId, bool checkBackupDir) {
         if (checkBackupDir) {
             // replaces prefix `configPath` with `backupPath` in the full file path
             fs::path originalConfigPath = file.path().lexically_relative(paths::configPath).lexically_normal();
-            fs::path backupConfigPath = paths::backupPath / originalConfigPath;
+            fs::path backupConfigPath = paths::backupPath / fs::path{program.tag} / originalConfigPath;
 
             if (!fs::exists(backupConfigPath)) {
                 std::cout << "unsynced file: " << backupConfigPath << '\n';
