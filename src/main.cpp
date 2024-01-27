@@ -1,4 +1,5 @@
 #include "database.h"
+#include "utils.h"
 #include <chrono>
 #include <filesystem>
 #include <format>
@@ -53,12 +54,7 @@ bool addPrograms(auto& storage, VecStr& programTitles) {
 
         std::vector<ConfigFile> files{};
         for (const auto& file : fs::recursive_directory_iterator(dirPath)) {
-            // TODO: extract out getting the time into a function
-            namespace chrono = std::chrono;
-            auto time = fs::last_write_time(file);
-            auto lastWriteTime = chrono::system_clock::to_time_t(
-                chrono::clock_cast<chrono::system_clock>(time));
-
+            auto lastWriteTime = getlastWriteTime(file);
             files.push_back(ConfigFile{.filePath = file.path().string(),
                                        .lastModified = lastWriteTime});
         }
