@@ -74,8 +74,7 @@ void syncFiles(Storage& storage, int programId, bool checkBackupDir) {
         fs::exists(program.configDir),
         std::format("Config directory: {} doesnt exist!", program.configDir));
 
-    for (const auto& file :
-    fs::recursive_directory_iterator(program.configDir)) {
+    for (const auto& file : fs::recursive_directory_iterator(program.configDir)) {
 
         auto dbFiles = storage.get_all<ConfigFile>(
             where(c(&ConfigFile::filePath) == file.path().string()));
@@ -85,7 +84,9 @@ void syncFiles(Storage& storage, int programId, bool checkBackupDir) {
 
         if (dbFiles.empty()) {
             std::cout << "File not in Database!" << std::endl;
-            return;
+            // add file to db
+            // push file into the to-be-copied vector
+            continue;
         }
         auto lastWriteTimeFile = getlastWriteTime(file);
 
@@ -97,8 +98,12 @@ void syncFiles(Storage& storage, int programId, bool checkBackupDir) {
 
             if (!fs::exists(backupConfigPath)) {
                 std::cout << "unsynced file: " << backupConfigPath << '\n';
+                // push file into the to-be-copied vector
+                continue;
             }
         }
         std::cout << ((lastWriteTimeFile > dbFiles[0].lastModified)? "Filesystem is newer!": "Database is synced!") << '\n';
+        // update lastWriteTime in db
+        // push file into the to-be-copied vector
     } 
 }
