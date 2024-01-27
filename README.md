@@ -17,5 +17,4 @@ Output binary will be located in `build/dotman`
 
 ## TODO
 
-- change file structure
 - fix command line argument parsing
