@@ -19,19 +19,19 @@ bool configExists(Storage& storage, std::string_view programTitle,
     return !data.empty();
 }
 
-bool insertConfig(Storage& storage, ProgramData& cfg, std::vector<ConfigFile>& cfgFiles) {
+bool insertNewConfig(Storage& storage, ProgramData& cfg, std::vector<ConfigFile>& cfgFiles) {
     if (configExists(storage, cfg.title, cfg.tag)) {
         return false;
     }
 
-    int programId = storage.insert(cfg);
+    auto programId = storage.insert(cfg);
     std::cout << "insertedId = " << programId << '\n';
     cfg.id = programId;
 
     storage.transaction([&] {
         for(auto& cfgFile: cfgFiles) {
             cfgFile.programId = programId;
-            int fileId = storage.insert(cfgFile);
+            auto fileId = storage.insert(cfgFile);
             cfgFile.id = fileId;
         }
         return true;  //  commit db
@@ -54,7 +54,7 @@ int getProgramId(Storage& storage, std::string_view programTitle, std::string_vi
     return data[0];
 }
 
-std::vector<ConfigFile> getProgramData(Storage& storage, int programId) {
+std::vector<ConfigFile> getConfigFiles(Storage& storage, int programId) {
     using namespace sqlite_orm;
     auto fileData = storage.select(
         object<ConfigFile>(), where(c(&ConfigFile::programId) == programId));
@@ -64,9 +64,9 @@ std::vector<ConfigFile> getProgramData(Storage& storage, int programId) {
 
 // TODO: return a vector of all the paths that need to be synced
 // when file in db but not in backup, file in db but older than actual, file not in db
-void syncFiles(Storage& storage, int programId, bool checkBackupDir) {
+namespace fs = std::filesystem;
+std::vector<std::pair<fs::path, fs::path>> syncFiles(Storage& storage, int programId, bool checkBackupDir) {
     using namespace sqlite_orm;
-    namespace fs = std::filesystem;
 
     auto program = storage.get<ProgramData>(programId);
 
@@ -74,6 +74,7 @@ void syncFiles(Storage& storage, int programId, bool checkBackupDir) {
         fs::exists(program.configDir),
         std::format("Config directory: {} doesnt exist!", program.configDir));
 
+    std::vector<std::pair<fs::path, fs::path>> filesToCopy{};
     for (const auto& file : fs::recursive_directory_iterator(program.configDir)) {
 
         auto dbFiles = storage.get_all<ConfigFile>(
@@ -81,29 +82,38 @@ void syncFiles(Storage& storage, int programId, bool checkBackupDir) {
 
         ASSERT_WITH_MSG(dbFiles.size() <= 1,
                         "Cannot have multiple files with same path");
+        
+        // replaces prefix `configPath` with `backupPath` in the full file path
+        auto originalDir = file.path().lexically_relative(paths::configPath).lexically_normal();
+        auto backupDir = paths::backupPath / fs::path{program.tag} / originalDir;
 
         if (dbFiles.empty()) {
             std::cout << "File not in Database!" << std::endl;
-            // add file to db
-            // push file into the to-be-copied vector
+            // add file to db and push file into the to-be-copied vector
+            
+            filesToCopy.emplace_back(originalDir, backupDir);
             continue;
         }
         auto lastWriteTimeFile = getlastWriteTime(file);
 
         // checks if the file is not present in the backup dir
         if (checkBackupDir) {
-            // replaces prefix `configPath` with `backupPath` in the full file path
-            fs::path originalConfigPath = file.path().lexically_relative(paths::configPath).lexically_normal();
-            fs::path backupConfigPath = paths::backupPath / fs::path{program.tag} / originalConfigPath;
-
-            if (!fs::exists(backupConfigPath)) {
-                std::cout << "unsynced file: " << backupConfigPath << '\n';
+            if (!fs::exists(backupDir)) {
+                std::cout << "unsynced file: " << backupDir << '\n';
                 // push file into the to-be-copied vector
+                filesToCopy.emplace_back(originalDir, backupDir);
                 continue;
             }
         }
-        std::cout << ((lastWriteTimeFile > dbFiles[0].lastModified)? "Filesystem is newer!": "Database is synced!") << '\n';
-        // update lastWriteTime in db
-        // push file into the to-be-copied vector
+
+        auto dbFile = dbFiles[0];
+        if (lastWriteTimeFile > dbFile.lastModified) {
+            std::cout << "Filesystem is newer";
+            // update lastWriteTime in db and push file into the to-be-copied vector
+            dbFile.lastModified = lastWriteTimeFile;
+            storage.update(dbFile);
+            filesToCopy.emplace_back(originalDir, backupDir);
+        }
     } 
+    return filesToCopy;
 }

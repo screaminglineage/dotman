@@ -39,11 +39,6 @@ struct ConfigFile {
     std::time_t lastModified{};
 };
 
-struct ConfigProgram {
-    ProgramData data;
-    std::vector<ConfigFile> files;
-};
-
 inline auto initDb() {
     std::cout << "Creating table...\n";
 
@@ -77,13 +72,13 @@ using Storage = decltype(initDb());
 bool configExists(Storage& storage, std::string_view programTitle, std::string_view programTag);
     
 // inserts configs for a program and all of its files into the DB
-bool insertConfig(Storage& storage, ProgramData& cfg, std::vector<ConfigFile>& cfgFiles);
+bool insertNewConfig(Storage& storage, ProgramData& cfg, std::vector<ConfigFile>& cfgFiles);
 
 // Returns the ID for a program given its title and tag
 int getProgramId(Storage& storage, std::string_view programTitle, std::string_view programTag);
 
-// Get the all the file data for a particular program
-std::vector<ConfigFile> getProgramData(Storage& storage, int programId);
+// Get the all the config file  data for a particular program
+std::vector<ConfigFile> getConfigFiles(Storage& storage, int programId);
 
 
 // TODO: return a vector of all the paths that need to be synced
@@ -91,4 +86,6 @@ std::vector<ConfigFile> getProgramData(Storage& storage, int programId);
 //
 // if checkBackupDir is set to true, the function checks for each file in 
 // the backup directory and if the file doesnt exist then copies it over
-void syncFiles(Storage& storage, int programId, bool checkBackupDir = true);
+std::vector<std::pair<std::filesystem::path, std::filesystem::path>> 
+    syncFiles(Storage& storage, int programId, bool checkBackupDir = true);
+

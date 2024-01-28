@@ -61,7 +61,7 @@ bool addPrograms(auto& storage, VecStr& programTitles) {
         }
 
         // add configs to DB
-        if (!insertConfig(storage, cfg, files)) {
+        if (!insertNewConfig(storage, cfg, files)) {
             std::cerr << std::format(
                 "Config: {} with tag `{}` already exists!\n", cfg.title,
                 cfg.tag);
@@ -99,8 +99,8 @@ int main(int argc, char* argv[]) {
         return 1;
 
     // for testing
-    auto data1 = getProgramData(storage, getProgramId(storage, "kitty", "primary"));
-    for (const auto& file : data1) {
+    auto files = getConfigFiles(storage, getProgramId(storage, "kitty", "primary"));
+    for (const auto& file : files) {
         std::cout << file.filePath << ' ' << file.lastModified << std::endl;
     }
 
