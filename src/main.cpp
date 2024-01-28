@@ -104,12 +104,17 @@ int main(int argc, char* argv[]) {
         std::cout << file.filePath << ' ' << file.lastModified << std::endl;
     }
 
-    if (!syncPrograms.empty() && !syncPrograms[0].empty()) {
-        if (!configExists(storage, syncPrograms[0], "primary")) {
-            std::cerr << std::format("Error: no such program added: `{}`\n", syncPrograms[0]);
+
+    for (const auto& prog: syncPrograms) {
+        if (!configExists(storage, prog, "primary")) {
+            std::cerr << std::format("Error: no such program added: `{}`\n", prog);
             return 1;
         }
-        syncFiles(storage, getProgramId(storage, syncPrograms[0], "primary"));
+        auto filesToSync = syncFiles(storage, getProgramId(storage, prog, "primary"));
+
+        for (const auto& file: filesToSync) {
+            fs::copy(file.first, file.second, fs::copy_options::overwrite_existing);
+        }
     }
 
     return 0;

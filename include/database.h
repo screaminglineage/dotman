@@ -13,15 +13,15 @@ const std::filesystem::path configPath{"/home/aditya/.config/"};
 const std::filesystem::path backupPath{"/mnt/Other-Stuff/Programming/C++/dotman/backup_temp/"};
 }
 
-#define ASSERT_WITH_MSG(cond, msg)                                             \
-    do {                                                                       \
-        if (!(cond)) {                                                         \
-            std::ostringstream str;                                            \
-            str << "Assertion Failed! " << msg;                                \
-            std::cerr << str.str();                                            \
-            std::abort();                                                      \
-        }                                                                      \
-    } while (0)
+#define dotman_assert(cond, msg)                                           \
+do {                                                                       \
+    if (!(cond)) {                                                         \
+        std::ostringstream str;                                            \
+        str << "Assertion Failed! " << msg;                                \
+        std::cerr << str.str();                                            \
+        std::abort();                                                      \
+    }                                                                      \
+} while (0)
 
 struct ProgramData {
     // int uuid;
