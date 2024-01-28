@@ -18,3 +18,4 @@ Output binary will be located in `build/dotman`
 ## TODO
 
 - fix command line argument parsing
+- delete files from backup and DB if they have been deleted from the original directory
