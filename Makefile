@@ -19,8 +19,6 @@ run: $(BIN_PATH)
 	$(BIN_PATH) add kitty rofi 
 	@printf "\n"
 	sqlite3 $(DB_FILE) 'SELECT * FROM programs;'
-	@printf "\n"
-	sqlite3 $(DB_FILE) 'SELECT * FROM config_files;'
 
 $(BIN_PATH): $(SRC)/*.cpp
 	$(CXX) $(STD) $(FLAGS) -isystem $(LIB) -I$(INCLUDE) -l$(SQLITE) $? -o $@

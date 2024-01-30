@@ -42,7 +42,7 @@ auto parseArguments(VecStr& args) {
 }
 
 // TODO: add option to also pass in the tags along with the program titles
-bool addPrograms(auto& storage, VecStr& programTitles) {
+bool addPrograms(Storage& storage, VecStr& programTitles) {
     for (const auto& programTitle : programTitles) {
         auto dirPath{paths::configPath / fs::path{programTitle}};
 
@@ -53,15 +53,8 @@ bool addPrograms(auto& storage, VecStr& programTitles) {
             continue;
         }
 
-        std::vector<ConfigFile> files{};
-        for (const auto& file : fs::recursive_directory_iterator(dirPath)) {
-            auto lastWriteTime = getlastWriteTime(file);
-            files.push_back(ConfigFile{.filePath = file.path().string(),
-                                       .lastModified = lastWriteTime});
-        }
-
         // add configs to DB
-        if (!insertNewConfig(storage, cfg, files)) {
+        if (!insertNewConfig(storage, cfg)) {
             std::cerr << std::format(
                 "Config: {} with tag `{}` already exists!\n", cfg.title,
                 cfg.tag);
@@ -81,8 +74,7 @@ bool addPrograms(auto& storage, VecStr& programTitles) {
 }
 
 int main(int argc, char* argv[]) {
-
-    std::string_view program{*argv};
+    std::string_view program = *argv;
     VecStr args(argv + 1, argv + argc);
 
     auto argOptions = parseArguments(args);
@@ -90,7 +82,7 @@ int main(int argc, char* argv[]) {
     auto syncPrograms = argOptions["sync"];
 
     if (programTitles.empty() && syncPrograms.empty()) {
-        std::cerr << "Error: no valid options specified!\n";
+        std::cerr << std::format("{}: no valid options specified!\n", program);
         return 1;
     }
 
@@ -98,24 +90,17 @@ int main(int argc, char* argv[]) {
     if (!addPrograms(storage, programTitles))
         return 1;
 
-    // for testing
-    auto files = getConfigFiles(storage, getProgramId(storage, "kitty", "primary"));
-    for (const auto& file : files) {
-        std::cout << file.filePath << ' ' << file.lastModified << std::endl;
-    }
-
-
-    for (const auto& prog: syncPrograms) {
-        if (!configExists(storage, prog, "primary")) {
-            std::cerr << std::format("Error: no such program added: `{}`\n", prog);
-            return 1;
-        }
-        auto filesToSync = syncFiles(storage, getProgramId(storage, prog, "primary"));
-
-        for (const auto& file: filesToSync) {
-            fs::copy(file.first, file.second, fs::copy_options::overwrite_existing);
-        }
-    }
+    // for (const auto& prog: syncPrograms) {
+    //     if (!configExists(storage, prog, "primary")) {
+    //         std::cerr << std::format("{}: no such program added: `{}`\n", program, prog);
+    //         return 1;
+    //     }
+    //     auto filesToSync = syncFiles(storage, getProgramId(storage, prog, "primary"));
+    //
+    //     for (const auto& file: filesToSync) {
+    //         fs::copy(file.first, file.second, fs::copy_options::overwrite_existing);
+    //     }
+    // }
 
     return 0;
 }
