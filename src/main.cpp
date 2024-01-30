@@ -9,31 +9,34 @@
 #include <unordered_set>
 #include <vector>
 namespace fs = std::filesystem;
-using VecStr = std::vector<std::string_view>;
+using VecSV = std::vector<std::string_view>;
 
-const std::unordered_set<std::string_view> options{"add", "sync"};
+enum class CliCommand {
+    Add,
+    Sync,
+    Error,
+};
 
-auto parseArguments(VecStr& args) {
-    std::unordered_map<std::string_view, VecStr> argOptions{};
+struct ParseResult {
+    CliCommand command{};
+    std::span<std::string_view, std::dynamic_extent> arguments{};
+};
 
-    for (auto it{args.begin()}; it < args.end(); ++it) {
-        if (!options.contains(*it))
-            continue;
-
-        auto opt = *it;
-        ++it;
-        VecStr addArgs{};
-        while (it < args.end() && !options.contains(*it)) {
-            addArgs.push_back(*it);
-            ++it;
-        }
-        argOptions.insert({opt, addArgs});
+ParseResult parseArguments(VecSV& args) {
+    auto result = ParseResult{};
+    if (args[0] == "add") {
+        result.command = CliCommand::Add;
+    } else if (args[0] == "sync") {
+        result.command = CliCommand::Sync;
+    } else {
+        result.command = CliCommand::Error;
     }
-    return argOptions;
+    result.arguments = std::span{args.begin() + 1, args.end()};
+    return result;
 }
 
 // TODO: add option to also pass in the tags along with the program titles
-bool addPrograms(Storage& storage, VecStr& programTitles) {
+void addPrograms(Storage& storage, VecSV& programTitles) {
     for (const auto& programTitle : programTitles) {
         auto dirPath{paths::configPath / fs::path{programTitle}};
 
@@ -61,34 +64,33 @@ bool addPrograms(Storage& storage, VecStr& programTitles) {
         fs::copy(dirPath, programBackupPath / fs::path{cfg.title}, 
                  fs::copy_options::recursive | fs::copy_options::update_existing);
     }
-    return true;
 }
 
 int main(int argc, char* argv[]) {
     std::string_view program = *argv;
-    VecStr args(argv + 1, argv + argc);
+    VecSV args(argv + 1, argv + argc);
 
     auto argOptions = parseArguments(args);
-    auto programTitles = argOptions["add"];
-    auto syncPrograms = argOptions["sync"];
-
-    if (programTitles.empty() && syncPrograms.empty()) {
-        std::cerr << std::format("{}: no valid options specified!\n", program);
+    
+    if (argOptions.command == CliCommand::Error) {
+        std::cerr << std::format("{}: no valid commands specified!\n", program);
         return 1;
     }
 
     auto storage = initDb();
-    if (!addPrograms(storage, programTitles))
-        return 1;
-
-    for (const auto& prog: syncPrograms) {
-        if (!configExists(storage, prog, "primary")) {
-            std::cerr << std::format("{}: no such program added: `{}`\n", program, prog);
-            return 1;
-        }
-        if (!syncFiles(storage, getProgramId(storage, prog, "primary"))) {
-            std::cerr << std::format("{}: backup directory not found for `{}`\n", program, prog);
-            return 1;
+    
+    if (argOptions.command == CliCommand::Add) {
+        addPrograms(storage, programTitles);
+    } else if (argOptions.command == CliCommand::Sync) {
+        for (const auto& prog: argOptions.arguments) {
+            if (!configExists(storage, prog, "primary")) {
+                std::cerr << std::format("{}: no such program added: `{}`\n", program, prog);
+                return 1;
+            }
+            if (!syncFiles(storage, getProgramId(storage, prog, "primary"))) {
+                std::cerr << std::format("{}: backup directory not found for `{}`\n", program, prog);
+                return 1;
+            }
         }
     }
 

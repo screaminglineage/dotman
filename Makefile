@@ -1,5 +1,5 @@
 STD = -std=c++20
-FLAGS = -Wall -Weffc++ -Wextra -Wconversion -Wsign-conversion
+FLAGS = -Wall -Weffc++ -Wextra -Wconversion -Wsign-conversion -ggdb
 BIN = dotman
 DB_FILE = db.sqlite
 
