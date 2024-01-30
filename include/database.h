@@ -14,7 +14,7 @@ const std::filesystem::path backupPath{"/mnt/Other-Stuff/Programming/C++/dotman/
 const std::filesystem::path dbFilePath{"./db.sqlite"};
 }
 
-#define dotman_assert(cond, msg)                                           \
+#define DOTMAN_ASSERT(cond, msg)                                           \
 do {                                                                       \
     if (!(cond)) {                                                         \
         std::ostringstream str;                                            \
@@ -54,18 +54,17 @@ inline auto initDb() {
 
 using Storage = decltype(initDb());
 
-// check if a program with the given title and tag already exists
+// Check if a program with the given title and tag already exists
 bool configExists(Storage& storage, std::string_view programTitle, std::string_view programTag);
     
-// inserts configs for a program  into the DB
+// Insert configs for a program  into the DB
 bool insertNewConfig(Storage& storage, ProgramData& cfg);
 
-// Returns the ID for a program given its title and tag
+// Return the ID for a program given its title and tag
 int getProgramId(Storage& storage, std::string_view programTitle, std::string_view programTag);
 
-// Returns a vector of all the paths in a pair (from, to) 
-// for paths that need to be synced. Also checks if a file
-// doesnt exist in the backup dir when checkBackupDir is true
-// std::vector<std::pair<std::filesystem::path, std::filesystem::path>> 
-//     syncFiles(Storage& storage, int programId, bool checkBackupDir = true);
-
+// Sync between program config path and backup directory
+// deleting any files which exist in backup but not in config
+// and updating others
+// Returns false if backup directory doesnt exist
+bool syncFiles(Storage& storage, int programId);

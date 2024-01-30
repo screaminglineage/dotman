@@ -90,17 +90,16 @@ int main(int argc, char* argv[]) {
     if (!addPrograms(storage, programTitles))
         return 1;
 
-    // for (const auto& prog: syncPrograms) {
-    //     if (!configExists(storage, prog, "primary")) {
-    //         std::cerr << std::format("{}: no such program added: `{}`\n", program, prog);
-    //         return 1;
-    //     }
-    //     auto filesToSync = syncFiles(storage, getProgramId(storage, prog, "primary"));
-    //
-    //     for (const auto& file: filesToSync) {
-    //         fs::copy(file.first, file.second, fs::copy_options::overwrite_existing);
-    //     }
-    // }
+    for (const auto& prog: syncPrograms) {
+        if (!configExists(storage, prog, "primary")) {
+            std::cerr << std::format("{}: no such program added: `{}`\n", program, prog);
+            return 1;
+        }
+        if (!syncFiles(storage, getProgramId(storage, prog, "primary"))) {
+            std::cerr << std::format("{}: backup directory not found for `{}`\n", program, prog);
+            return 1;
+        }
+    }
 
     return 0;
 }
