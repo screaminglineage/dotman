@@ -34,29 +34,38 @@ ParseResult parseArguments(VecSV& args) {
         result.command = CliCommand::Error;
         return result;
     }
-    
+
     // skipping the first arg which is a subcommand
     for (size_t i = 1; i < args.size(); i++) {
         std::string_view arg = args[i];
 
         std::string_view option{};
+        bool shortOption{};
         // checking for options like `--arg` or `-a`
         if (arg.starts_with('-') && arg.size() >= 2) {
-            (arg[1] == '-')? option = arg.substr(2): option = arg.substr(1);
-            
+            if (arg[1] == '-') {
+                shortOption = false;
+                option = arg.substr(2);
+            } else {
+                shortOption = true;
+                option = arg.substr(1);
+            }
+
             // should have at least 1 argument after option
             if (i >= args.size() - 1) {
-                std::cerr << std::format("Error: no argument specified to option `{}`\n", option);
+                std::cerr << std::format(
+                    "Error: no argument specified to option `{}`\n", option);
                 result.command = CliCommand::Error;
                 return result;
             }
 
-            if (option == "tag" || option == "t") {
-                result.tag = args[i+1];
+            if ((option == "tag" && !shortOption) 
+                || (option == "t" && shortOption)) {
+                result.tag = args[i + 1];
                 i++;
             }
             continue;
-        } 
+        }
         result.arguments.push_back(arg);
     }
     return result;
@@ -88,8 +97,9 @@ void addPrograms(Storage& storage, VecSV& programTitles) {
         if (!fs::exists(programBackupPath)) {
             fs::create_directory(programBackupPath);
         }
-        fs::copy(dirPath, programBackupPath / fs::path{cfg.title}, 
-                 fs::copy_options::recursive | fs::copy_options::update_existing);
+        fs::copy(dirPath, programBackupPath / fs::path{cfg.title},
+                 fs::copy_options::recursive |
+                     fs::copy_options::update_existing);
     }
 }
 
@@ -98,24 +108,26 @@ int main(int argc, char* argv[]) {
     VecSV args(argv + 1, argv + argc);
 
     auto argOptions = parseArguments(args);
-    
+
     if (argOptions.command == CliCommand::Error) {
         return 1;
     }
 
     auto storage = initDb();
-    
+
     if (argOptions.command == CliCommand::Add) {
         addPrograms(storage, argOptions.arguments);
 
     } else if (argOptions.command == CliCommand::Sync) {
-        for (const auto& prog: argOptions.arguments) {
+        for (const auto& prog : argOptions.arguments) {
             if (!configExists(storage, prog, "primary")) {
-                std::cerr << std::format("{}: no such program added: `{}`\n", program, prog);
+                std::cerr << std::format("{}: no such program added: `{}`\n",
+                                         program, prog);
                 return 1;
             }
             if (!syncFiles(storage, getProgramId(storage, prog, "primary"))) {
-                std::cerr << std::format("{}: backup directory not found for `{}`\n", program, prog);
+                std::cerr << std::format(
+                    "{}: backup directory not found for `{}`\n", program, prog);
                 return 1;
             }
         }
