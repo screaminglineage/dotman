@@ -19,7 +19,8 @@ enum class CliCommand {
 
 struct ParseResult {
     CliCommand command{};
-    std::span<std::string_view, std::dynamic_extent> arguments{};
+    std::string_view tag{"primary"};
+    VecSV arguments{};
 };
 
 ParseResult parseArguments(VecSV& args) {
@@ -29,9 +30,35 @@ ParseResult parseArguments(VecSV& args) {
     } else if (args[0] == "sync") {
         result.command = CliCommand::Sync;
     } else {
+        std::cerr << "Error: no subcommand specified. available: [add|sync] \n";
         result.command = CliCommand::Error;
+        return result;
     }
-    result.arguments = std::span{args.begin() + 1, args.end()};
+    
+    // skipping the first arg which is a subcommand
+    for (size_t i = 1; i < args.size(); i++) {
+        std::string_view arg = args[i];
+
+        std::string_view option{};
+        // checking for options like `--arg` or `-a`
+        if (arg.starts_with('-') && arg.size() >= 2) {
+            (arg[1] == '-')? option = arg.substr(2): option = arg.substr(1);
+            
+            // should have at least 1 argument after option
+            if (i >= args.size() - 1) {
+                std::cerr << std::format("Error: no argument specified to option `{}`\n", option);
+                result.command = CliCommand::Error;
+                return result;
+            }
+
+            if (option == "tag" || option == "t") {
+                result.tag = args[i+1];
+                i++;
+            }
+            continue;
+        } 
+        result.arguments.push_back(arg);
+    }
     return result;
 }
 
@@ -73,14 +100,14 @@ int main(int argc, char* argv[]) {
     auto argOptions = parseArguments(args);
     
     if (argOptions.command == CliCommand::Error) {
-        std::cerr << std::format("{}: no valid commands specified!\n", program);
         return 1;
     }
 
     auto storage = initDb();
     
     if (argOptions.command == CliCommand::Add) {
-        addPrograms(storage, programTitles);
+        addPrograms(storage, argOptions.arguments);
+
     } else if (argOptions.command == CliCommand::Sync) {
         for (const auto& prog: argOptions.arguments) {
             if (!configExists(storage, prog, "primary")) {
