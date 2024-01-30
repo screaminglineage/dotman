@@ -1,6 +1,5 @@
 #include "database.h"
 #include "utils.h"
-#include <chrono>
 #include <filesystem>
 #include <format>
 #include <iostream>
@@ -10,33 +9,25 @@
 #include <unordered_set>
 #include <vector>
 namespace fs = std::filesystem;
-using namespace std::chrono_literals;
-
-const std::unordered_set<std::string_view> options{"add", "sync"};
-
 using VecStr = std::vector<std::string_view>;
 
-struct CLIOption {
-    const char* long_option{};
-    const char* short_option{};
-};
+const std::unordered_set<std::string_view> options{"add", "sync"};
 
 auto parseArguments(VecStr& args) {
     std::unordered_map<std::string_view, VecStr> argOptions{};
 
     for (auto it{args.begin()}; it < args.end(); ++it) {
-        for (const auto& opt : options) {
-            if (*it != opt)
-                continue;
+        if (!options.contains(*it))
+            continue;
 
+        auto opt = *it;
+        ++it;
+        VecStr addArgs{};
+        while (it < args.end() && !options.contains(*it)) {
+            addArgs.push_back(*it);
             ++it;
-            VecStr addArgs{};
-            while (it < args.end() && !options.contains(*it)) {
-                addArgs.push_back(*it);
-                ++it;
-            }
-            argOptions.insert({opt, addArgs});
         }
+        argOptions.insert({opt, addArgs});
     }
     return argOptions;
 }
